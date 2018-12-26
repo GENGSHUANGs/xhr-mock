@@ -25,7 +25,42 @@ export function sync(
       return result;
     }
   }
+
   throw NO_RESPONSE_ERROR;
+}
+
+function reduce(values: any[], fn: Function, initializeValue: any) {
+  if (!values || values.length === 0) {
+    return Promise.resolve(initializeValue);
+  }
+  return new Promise((resolve: Function, reject: Function) => {
+    let total: any = initializeValue;
+    function next(idx: number): any {
+      try {
+        if (idx >= values.length) {
+          return resolve(total);
+        }
+        const val = values[idx];
+
+        const _r: any = fn(total, val);
+        if (_r && _r['then']) {
+          _r
+            .then((_total: any) => {
+              total = _total;
+              next(idx + 1);
+            })
+            .catch(reject);
+        } else {
+          total = _r;
+          next(idx + 1);
+        }
+      } catch (err) {
+        reject(err);
+      }
+    }
+
+    next(0);
+  });
 }
 
 export function async(
@@ -33,21 +68,43 @@ export function async(
   request: MockRequest,
   response: MockResponse
 ): Promise<MockResponse> {
-  return handlers
-    .reduce(
-      (promise, handler) =>
-        promise.then(result => {
-          if (!result) {
-            return handler(request, response);
-          }
-          return result;
-        }),
-      Promise.resolve(undefined)
-    )
-    .then(result => {
+  return reduce(
+    handlers,
+    (result: MockResponse, handler: MockFunction) => {
       if (!result) {
-        throw NO_RESPONSE_ERROR;
+        return new Promise((resolve: Function, reject: Function) => {
+          try {
+            const result: any | MockResponse = handler(
+              request,
+              response,
+              (err: Error, result: MockResponse) => {
+                if (err) {
+                  return reject(err);
+                }
+                resolve(result);
+              }
+            );
+            if (result === false) {
+              return resolve(undefined);
+            }
+            if (result) {
+              if (result.then) {
+                return result.then(resolve).catch(reject);
+              }
+              resolve(result);
+            }
+          } catch (err) {
+            reject(err);
+          }
+        });
       }
       return result;
-    });
+    },
+    undefined
+  ).then((result: MockResponse) => {
+    if (!result) {
+      throw NO_RESPONSE_ERROR;
+    }
+    return result;
+  });
 }

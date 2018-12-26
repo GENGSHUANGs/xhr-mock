@@ -63,8 +63,6 @@ export default class MockXMLHttpRequest extends MockXMLHttpRequestEventTarget
   readonly LOADING = ReadyState.LOADING;
   readonly DONE = ReadyState.DONE;
 
-  onreadystatechange: (this: XMLHttpRequest, ev: Event) => any;
-
   //some libraries (like Mixpanel) use the presence of this field to check if XHR is properly supported
   // https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/withCredentials
   withCredentials: boolean = false;
@@ -104,12 +102,7 @@ export default class MockXMLHttpRequest extends MockXMLHttpRequestEventTarget
   private req: MockRequest = new MockRequest();
   private res: MockResponse = new MockResponse();
 
-  responseType: XMLHttpRequestResponseType = '';
-  responseURL: string = '';
   private _timeout: number = 0;
-  // @ts-ignore: https://github.com/jameslnewell/xhr-mock/issues/45
-  upload: XMLHttpRequestUpload = new MockXMLHttpRequestUpload();
-  readyState: ReadyState = MockXMLHttpRequest.UNSENT;
 
   // flags
   private isSynchronous: boolean = false;
@@ -121,11 +114,103 @@ export default class MockXMLHttpRequest extends MockXMLHttpRequestEventTarget
   // @ts-ignore: wants a NodeJS.Timer because of @types/node
   private _timeoutTimer: number;
 
+  // responseType: XMLHttpRequestResponseType = '';
+  // responseURL: string = '';
+  // // @ts-ignore: https://github.com/jameslnewell/xhr-mock/issues/45
+  // upload: XMLHttpRequestUpload = new MockXMLHttpRequestUpload();
+  // readyState: ReadyState = MockXMLHttpRequest.UNSENT;
+  _responseType: any = '';
+  set responseType(_t: any) {
+    if (this.rxhr) {
+      this.rxhr.responseType = _t;
+      return;
+    }
+    this._responseType = _t;
+  }
+
+  get responseType() {
+    if (this.rxhr) {
+      return this.rxhr.responseType;
+    }
+    return this._responseType;
+  }
+
+  _responseURL: any = '';
+  set responseURL(_url: any) {
+    if (this.rxhr) {
+      this.rxhr.responseURL = _url;
+      return;
+    }
+    this._responseURL = _url;
+  }
+
+  get responseURL() {
+    if (this.rxhr) {
+      return this.rxhr.responseURL;
+    }
+    return this._responseURL;
+  }
+
+  _upload: any = new MockXMLHttpRequestUpload();
+  set upload(_u: any) {
+    if (this.rxhr) {
+      this.rxhr.upload = _u;
+      return;
+    }
+    this._upload = _u;
+  }
+
+  get upload() {
+    if (this.rxhr) {
+      return this.rxhr.upload;
+    }
+    return this._upload;
+  }
+
+  _readyState: any = MockXMLHttpRequest.UNSENT;
+  set readyState(_s: any) {
+    if (this.rxhr) {
+      this.rxhr.readyState = _s;
+      return;
+    }
+    this._readyState = _s;
+  }
+
+  get readyState() {
+    if (this.rxhr) {
+      return this.rxhr.readyState;
+    }
+    return this._readyState;
+  }
+
+  private _onreadystatechange: (this: XMLHttpRequest, ev: Event) => any;
+  set onreadystatechange(_fn: any) {
+    if (this.rxhr) {
+      this.rxhr.onreadystatechange = _fn;
+      return;
+    }
+    this._onreadystatechange = _fn;
+  }
+
+  get onreadystatechange() {
+    if (this.rxhr) {
+      return this.rxhr.onreadystatechange;
+    }
+    return this._onreadystatechange;
+  }
+
   get timeout(): number {
+    if (this.rxhr) {
+      return this.rxhr.timeout;
+    }
     return this._timeout;
   }
 
   set timeout(timeout: number) {
+    if (this.rxhr) {
+      this.rxhr.timeout = timeout;
+      return;
+    }
     if (timeout !== 0 && this.isSynchronous) {
       throw new MockError(
         'Timeouts cannot be set for synchronous requests made from a document.'
@@ -136,6 +221,10 @@ export default class MockXMLHttpRequest extends MockXMLHttpRequestEventTarget
 
   // https://xhr.spec.whatwg.org/#the-response-attribute
   get response(): any {
+    if (this.rxhr) {
+      return this.rxhr.response;
+    }
+
     if (this.responseType === '' || this.responseType === 'text') {
       if (this.readyState !== this.LOADING && this.readyState !== this.DONE) {
         return '';
@@ -189,22 +278,37 @@ export default class MockXMLHttpRequest extends MockXMLHttpRequestEventTarget
   }
 
   get responseText(): string {
+    if (this.rxhr) {
+      return this.rxhr.responseText;
+    }
     return this.res.body() || '';
   }
 
   get responseXML(): Document | null {
+    if (this.rxhr) {
+      return this.rxhr.responseXML;
+    }
     throw notImplementedError;
   }
 
   get status(): number {
+    if (this.rxhr) {
+      return this.rxhr.status;
+    }
     return this.res.status();
   }
 
   get statusText(): string {
+    if (this.rxhr) {
+      return this.rxhr.statusText;
+    }
     return this.res.reason();
   }
 
   getAllResponseHeaders(): string {
+    if (this.rxhr) {
+      return this.rxhr.getAllResponseHeaders();
+    }
     // I'm pretty sure this fn can return null, but TS types say no
     // if (this.readyState < MockXMLHttpRequest.HEADERS_RECEIVED) {
     //   return null;
@@ -218,6 +322,9 @@ export default class MockXMLHttpRequest extends MockXMLHttpRequestEventTarget
   }
 
   getResponseHeader(name: string): null | string {
+    if (this.rxhr) {
+      return this.rxhr.getResponseHeader(name);
+    }
     if (this.readyState < MockXMLHttpRequest.HEADERS_RECEIVED) {
       return null;
     }
@@ -226,6 +333,9 @@ export default class MockXMLHttpRequest extends MockXMLHttpRequestEventTarget
   }
 
   setRequestHeader(name: string, value: string): void {
+    if (this.rxhr) {
+      return this.rxhr.setRequestHeader(name, value);
+    }
     if (this.readyState < MockXMLHttpRequest.OPENED) {
       throw new MockError('xhr must be OPENED.');
     }
@@ -233,9 +343,9 @@ export default class MockXMLHttpRequest extends MockXMLHttpRequestEventTarget
     this.req.header(name, value);
   }
 
-  overrideMimeType(mime: string): void {
-    throw notImplementedError;
-  }
+  // overrideMimeType(mime: string): void {
+  //     throw notImplementedError;
+  // }
 
   open(
     method: string,
@@ -288,6 +398,50 @@ export default class MockXMLHttpRequest extends MockXMLHttpRequestEventTarget
       .method(method)
       .headers({})
       .url(formatURL(fullURL));
+
+    const handler = MockXMLHttpRequest.handlers.find(
+      (handler: MockFunction) => {
+        return handler.match(this.req);
+      }
+    );
+    if (!handler) {
+      const RealXMLHttpRequest = (window as any)['RealXMLHttpRequest'];
+      const rxhr = new RealXMLHttpRequest();
+      const {
+        onabort,
+        onerror,
+        onload,
+        onloadend,
+        onloadstart,
+        onprogress,
+        onreadystatechange,
+        ontimeout,
+        responseType,
+        timeout,
+        withCredentials
+      } = this;
+      Object.assign(rxhr, {
+        onabort,
+        onerror,
+        onload,
+        onloadend,
+        onloadstart,
+        onprogress,
+        onreadystatechange,
+        ontimeout,
+        responseType,
+        timeout,
+        withCredentials
+      });
+      const headers = this.req.headers();
+      Object.keys(headers || {}).forEach(header => {
+        rxhr.setRequestHeader(header, headers[header]);
+      });
+
+      this.rxhr = rxhr;
+      return rxhr.open(method, url, async, username, password);
+    }
+
     this.applyNetworkError();
 
     // if the state is not opened, run these substeps:
@@ -316,6 +470,15 @@ export default class MockXMLHttpRequest extends MockXMLHttpRequestEventTarget
       // if promise is fulfilled with bytes, then append bytes to received bytes
       // run handle response end-of-body for response
       this.handleResponseBody(res);
+      console.log &&
+        console.log(
+          '%c<<< XHR MOCK HTTP',
+          'color: #339900;text-decoration: underline;',
+          this.req.method() + ' ' + this.req.url() + ' RESPONSE BODY : ',
+          res,
+          'REQUEST BODY : ',
+          this.req.body()
+        );
     } catch (error) {
       MockXMLHttpRequest.errorCallback({req: this.req, err: error});
       this.handleError(error);
@@ -382,6 +545,15 @@ export default class MockXMLHttpRequest extends MockXMLHttpRequestEventTarget
 
       this.sendRequest(req);
       this.receiveResponse(res);
+      console.log &&
+        console.log(
+          '%c<<< XHR MOCK HTTP',
+          'color: #339900;text-decoration: underline;',
+          this.req.method() + ' ' + this.req.url() + ' RESPONSE BODY : ',
+          res,
+          'REQUEST BODY : ',
+          this.req.body()
+        );
     } catch (error) {
       //we've received an error before the timeout so we don't want to timeout
       clearTimeout(this._timeoutTimer);
@@ -620,6 +792,17 @@ export default class MockXMLHttpRequest extends MockXMLHttpRequestEventTarget
   send(): void;
   send(body?: any): void;
   send(body?: any): void {
+    if (this.rxhr) {
+      return this.rxhr.send(body);
+    }
+    console.log &&
+      console.log(
+        '%c>>> XHR MOCK HTTP',
+        'color: #339900;text-decoration: underline;',
+        this.req.method() + ' ' + this.req.url() + ' HEADERS : ',
+        this.req.headers(),
+        ' BODY : ' + body
+      );
     // if state is not opened, throw an InvalidStateError exception
     if (this.readyState !== MockXMLHttpRequest.OPENED) {
       throw new MockError(
@@ -721,6 +904,9 @@ export default class MockXMLHttpRequest extends MockXMLHttpRequestEventTarget
   }
 
   abort(): void {
+    if (this.rxhr) {
+      return this.rxhr.abort();
+    }
     //we've cancelling the response before the timeout period so we don't want to timeout
     clearTimeout(this._timeoutTimer);
 

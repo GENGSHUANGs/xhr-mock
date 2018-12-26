@@ -25,13 +25,20 @@ export default function(
     return requestURL === url; //TODO: should we use .startsWith()???
   };
 
-  return (req, res) => {
+  const fn = (req: any, res: any, callback: Function) => {
     if (matches(req)) {
       if (typeof mock === 'object') {
         return createResponseFromObject(mock);
       } else {
-        return mock(req, res);
+        return mock(req, res, callback);
       }
     }
+    return false;
   };
+
+  (fn as any)['match'] = (req: any) => {
+    return matches(req);
+  };
+
+  return fn;
 }

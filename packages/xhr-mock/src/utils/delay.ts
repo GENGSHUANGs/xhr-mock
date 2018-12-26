@@ -6,7 +6,7 @@ export function delay(
   mock: MockFunction | MockObject,
   ms: number = 1500
 ): MockFunction {
-  return (req, res) => {
+  return (req: any, res: any) => {
     const ret =
       typeof mock === 'function'
         ? mock(req, res)
@@ -14,7 +14,7 @@ export function delay(
     if (ret === undefined) {
       return undefined;
     }
-    return Promise.resolve(ret).then(val => {
+    return Promise.resolve(ret).then((val: any) => {
       if (val == undefined) {
         return undefined;
       } else {

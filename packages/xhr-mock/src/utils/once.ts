@@ -3,7 +3,7 @@ import {createResponseFromObject} from '../createResponseFromObject';
 
 export function once(mock: MockFunction | MockObject): MockFunction {
   let callCount = 0;
-  return (req, res) => {
+  return (req: any, res: any) => {
     if (callCount === 0) {
       ++callCount;
       return typeof mock === 'function'

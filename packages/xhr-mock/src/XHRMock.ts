@@ -3,7 +3,8 @@ import {Mock, MockFunction, ErrorCallbackEvent} from './types';
 import createMockFunction from './createMockFunction';
 import MockXMLHttpRequest from './MockXMLHttpRequest';
 
-const RealXMLHttpRequest = window.XMLHttpRequest;
+const RealXMLHttpRequest = ((window as any)['RealXMLHttpRequest'] =
+  window.XMLHttpRequest);
 
 export class XHRMock {
   RealXMLHttpRequest: {new (): XMLHttpRequest} = RealXMLHttpRequest;

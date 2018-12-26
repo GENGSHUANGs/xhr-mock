@@ -79,4 +79,10 @@ export default class MockResponse {
       return this._body;
     }
   }
+
+  json(obj: any): MockResponse {
+    this.header('Content-Type', 'application/json');
+    this._body = JSON.stringify(obj);
+    return this;
+  }
 }

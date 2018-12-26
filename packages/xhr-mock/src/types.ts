@@ -13,10 +13,7 @@ export type MockObject = {
   body?: any;
 };
 
-export type MockFunction = (
-  request: MockRequest,
-  response: MockResponse
-) => undefined | MockResponse | Promise<undefined | MockResponse>;
+export type MockFunction = any;
 
 export type Mock = MockObject | MockFunction;
 
