@@ -1,5 +1,30 @@
 # xhr-mock
 
+###### 异步
+
+```javascript
+XHRMock.get('url', function(req, resp, callback) {
+  callback(
+    undefined,
+    resp.status(200).json({
+      result: true
+    })
+  );
+});
+```
+
+or use promise
+
+```
+XHRMock.get('url',function(req,resp){
+  return new Promise(function(resolve){
+    resolve(resp.status(200).json({
+      result:true,
+    }));
+  });
+});
+```
+
 [![npm (tag)](https://img.shields.io/npm/v/xhr-mock.svg)]()
 [![Build Status](https://travis-ci.org/jameslnewell/xhr-mock.svg?branch=master)](https://travis-ci.org/jameslnewell/xhr-mock)
 [![npm](https://img.shields.io/npm/dm/localeval.svg)]()
