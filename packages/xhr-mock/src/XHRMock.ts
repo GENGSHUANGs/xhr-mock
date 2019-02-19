@@ -23,7 +23,7 @@ export class XHRMock {
   }
 
   reset(): XHRMock {
-    MockXMLHttpRequest.removeAllHandlers();
+    delete MockXMLHttpRequest.router;
     return this;
   }
 
@@ -32,70 +32,21 @@ export class XHRMock {
     return this;
   }
 
-  mock(fn: MockFunction): XHRMock;
-  mock(method: string, url: string | RegExp, mock: Mock): XHRMock;
-  mock(
-    fnOrMethod: string | MockFunction,
-    url?: string | RegExp,
-    mock?: Mock
-  ): XHRMock {
-    console.warn(
-      'xhr-mock: XHRMock.mock() has been deprecated. Use XHRMock.use() instead.'
-    );
-    if (
-      typeof fnOrMethod === 'string' &&
-      (typeof url === 'string' || url instanceof RegExp) &&
-      mock !== undefined
-    ) {
-      return this.use(fnOrMethod, url, mock);
-    } else if (typeof fnOrMethod === 'function') {
-      return this.use(fnOrMethod);
+  routes(): any;
+  routes(routes: any): XHRMock;
+  routes(routes?: any): any | XHRMock {
+    // TODO
+  }
+
+  router(): any;
+  router(router: any): XHRMock;
+  router(router?: any): any | XHRMock {
+    if (typeof router !== 'undefined' && router !== null) {
+      MockXMLHttpRequest.router = router;
+      return this;
     } else {
-      throw new Error('xhr-mock: Invalid handler.');
+      return MockXMLHttpRequest.router;
     }
-  }
-
-  use(fn: MockFunction): XHRMock;
-  use(method: string, url: string | RegExp, mock: Mock): XHRMock;
-  use(
-    fnOrMethod: string | MockFunction,
-    url?: string | RegExp,
-    mock?: Mock
-  ): XHRMock {
-    let fn: MockFunction;
-    if (
-      typeof fnOrMethod === 'string' &&
-      (typeof url === 'string' || url instanceof RegExp) &&
-      mock !== undefined
-    ) {
-      fn = createMockFunction(fnOrMethod, url, mock);
-    } else if (typeof fnOrMethod === 'function') {
-      fn = fnOrMethod;
-    } else {
-      throw new Error('xhr-mock: Invalid handler.');
-    }
-    MockXMLHttpRequest.addHandler(fn);
-    return this;
-  }
-
-  get(url: string | RegExp, mock: Mock): XHRMock {
-    return this.use('GET', url, mock);
-  }
-
-  post(url: string | RegExp, mock: Mock): XHRMock {
-    return this.use('POST', url, mock);
-  }
-
-  put(url: string | RegExp, mock: Mock): XHRMock {
-    return this.use('PUT', url, mock);
-  }
-
-  patch(url: string | RegExp, mock: Mock): XHRMock {
-    return this.use('PATCH', url, mock);
-  }
-
-  delete(url: string | RegExp, mock: Mock): XHRMock {
-    return this.use('DELETE', url, mock);
   }
 }
 

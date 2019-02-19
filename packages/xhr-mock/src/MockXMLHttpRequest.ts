@@ -67,7 +67,7 @@ export default class MockXMLHttpRequest extends MockXMLHttpRequestEventTarget
   // https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/withCredentials
   withCredentials: boolean = false;
 
-  static handlers: MockFunction[] = [];
+  static router: any = undefined;
   static errorCallback: (event: ErrorCallbackEvent) => void = ({req, err}) => {
     if (err instanceof MockError) {
       console.error(formatError(err.message, req));
@@ -77,27 +77,6 @@ export default class MockXMLHttpRequest extends MockXMLHttpRequestEventTarget
       );
     }
   };
-
-  /**
-   * Add a mock handler
-   */
-  static addHandler(fn: MockFunction): void {
-    this.handlers.push(fn);
-  }
-
-  /**
-   * Remove a mock handler
-   */
-  static removeHandler(fn: MockFunction): void {
-    throw notImplementedError;
-  }
-
-  /**
-   * Remove all request handlers
-   */
-  static removeAllHandlers(): void {
-    this.handlers = [];
-  }
 
   private req: MockRequest = new MockRequest();
   private res: MockResponse = new MockResponse();
@@ -399,49 +378,6 @@ export default class MockXMLHttpRequest extends MockXMLHttpRequestEventTarget
       .headers({})
       .url(formatURL(fullURL));
 
-    const handler = MockXMLHttpRequest.handlers.find(
-      (handler: MockFunction) => {
-        return handler.match(this.req);
-      }
-    );
-    if (!handler) {
-      const RealXMLHttpRequest = (window as any)['RealXMLHttpRequest'];
-      const rxhr = new RealXMLHttpRequest();
-      const {
-        onabort,
-        onerror,
-        onload,
-        onloadend,
-        onloadstart,
-        onprogress,
-        onreadystatechange,
-        ontimeout,
-        responseType,
-        timeout,
-        withCredentials
-      } = this;
-      Object.assign(rxhr, {
-        onabort,
-        onerror,
-        onload,
-        onloadend,
-        onloadstart,
-        onprogress,
-        onreadystatechange,
-        ontimeout,
-        responseType,
-        timeout,
-        withCredentials
-      });
-      const headers = this.req.headers();
-      Object.keys(headers || {}).forEach(header => {
-        rxhr.setRequestHeader(header, headers[header]);
-      });
-
-      this.rxhr = rxhr;
-      return rxhr.open(method, url, async, username, password);
-    }
-
     this.applyNetworkError();
 
     // if the state is not opened, run these substeps:
@@ -458,7 +394,7 @@ export default class MockXMLHttpRequest extends MockXMLHttpRequestEventTarget
     // let response be the result of fetching req
     let res;
     try {
-      res = handleSync(MockXMLHttpRequest.handlers, this.req, this.res);
+      res = handleSync(MockXMLHttpRequest.router, this, this.req, this.res);
 
       // if the timeout attribute value is not zero, then set the timed out flag and terminate fetching if it has not returned within the amount of milliseconds from the timeout.
       // TODO: check if timeout was elapsed
@@ -531,7 +467,8 @@ export default class MockXMLHttpRequest extends MockXMLHttpRequestEventTarget
 
     try {
       const res = await handleAsync(
-        MockXMLHttpRequest.handlers,
+        MockXMLHttpRequest.router,
+        this,
         this.req,
         this.res
       );

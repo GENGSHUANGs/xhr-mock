@@ -25,6 +25,7 @@
   "dependencies": {
     "bluebird": "^3.5.3",
     "global": "^4.3.0",
+    "universal-router": "^7.0.0",
     "url": "^0.11.0"
   },
   "devDependencies": {
